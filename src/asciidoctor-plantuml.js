@@ -30,9 +30,7 @@ function UndefinedPlantumlServer (message) {
 // eslint-disable-next-line new-parens
 UndefinedPlantumlServer.prototype = new Error
 
-function createImageSrc (doc, text, target, format, vfs) {
-  const serverUrl = doc.getAttribute('plantuml-server-url')
-  const shouldFetch = doc.isAttribute('plantuml-fetch-diagram')
+function createImageSrc (doc, serverUrl, shouldFetch, text, target, format, vfs) {
   let diagramUrl = `${serverUrl}/${format}/${plantumlEncoder.encode(text)}`
   if (shouldFetch) {
     diagramUrl = require('./fetch').save(diagramUrl, doc, target, format, vfs)
@@ -74,12 +72,21 @@ function processPlantuml (processor, parent, attrs, diagramType, diagramText, co
     const target = attrs.target
     const format = attrs.format || doc.getAttribute('plantuml-default-format') || 'png'
     if (format === 'png' || format === 'svg') {
-      const imageUrl = createImageSrc(doc, diagramText, target, format, context.vfs)
+      const inline = attrs['inline-option'] !== undefined
+      const interactive = !inline && attrs['interactive-option'] !== undefined
+      const shouldFetch = doc.isAttribute('plantuml-fetch-diagram') && (format === 'png' || !inline)
+      const imageUrl = createImageSrc(doc, serverUrl, shouldFetch, diagramText, target, format, context.vfs)
       const blockAttrs = {
         role: role ? `${role} plantuml` : 'plantuml',
         target: imageUrl,
         alt: target || 'diagram',
-        title
+        title,
+        format
+      }
+      if (inline) {
+        blockAttrs['inline-option'] = ''
+      } else if (interactive) {
+        blockAttrs['interactive-option'] = ''
       }
       if (blockId) blockAttrs.id = blockId
       return processor.createImageBlock(parent, blockAttrs)
@@ -95,7 +102,7 @@ function plantumlBlock (context) {
   return function () {
     const self = this
     self.onContext(['listing', 'literal'])
-    self.positionalAttributes(['target', 'format'])
+    self.positionalAttributes(['target', 'format', 'opts'])
 
     self.process((parent, reader, attrs) => {
       if (typeof attrs === 'object' && '$$smap' in attrs) {

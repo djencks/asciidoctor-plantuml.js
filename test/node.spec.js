@@ -173,26 +173,63 @@ graphviz::${__dirname}/fixtures/nodes.dot[format=png]`, {extension_registry: reg
         it('should fetch SVG when positional attr :format: is svg', async () => {
           const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':plantuml-fetch-diagram:'], ['test,svg']))
 
-          src = html('.imageblock.plantuml img').attr('src')
+          checkSvg(html)
+        })
+        it('should fetch SVG when named attr :format: is svg', async () => {
+          const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':plantuml-fetch-diagram:'], ['test,format=svg']))
 
-          expect(src).toBe('test.svg')
-          expect(path.basename(src)).toBe(src)
-          expect(fs.existsSync(src)).toBe(true)
+          checkSvg(html)
+        })
+        it('should fetch SVG when doc attr :plantuml-default-format: is svg', async () => {
+          const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':plantuml-fetch-diagram:', ':plantuml-default-format: svg'], ['test']))
 
-          const data = fs.readFileSync(src, 'utf8')
-            // remove comments (otherwise the md5sum won't be stable)
-            .replace(/<!--[\s\S]*?-->/g, '')
-          const hash = hasha(data, {algorithm: 'md5'})
-          expect(hash).toBe(fixture.svgHash)
-          const svgContent = fs.readFileSync(src, 'utf-8')
-            .replace(/\r/gm, '')
-            .replace(/\n$/, '') // remove trailing newline
+          checkSvg(html)
+        })
+        it('should inline SVG when format is svg and named attribute opts=inline is present', async () => {
+          const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`], ['test', 'svg', 'opts=inline']), { safe: 'safe', attributes: { 'allow-uri-read': true } })
+
+          const svg = html('.imageblock.plantuml > div > svg')
+          expect(svg).toBeObject()
           if (fixture.format === 'plantuml') {
             // NOTE when using the plantuml format, the svg file includes the source
-            expect(svgContent).toContain(fixture.source)
+            expect(svg.html()).toContain(fixture.source)
           }
-          expect(svgContent).toEndWith('</svg>')
         })
+        it('should use <obj> tag when format is svg and named attribute opts=interactive is present (remote url)', async () => {
+          const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`], ['test', 'svg', 'opts=interactive']), { safe: 'safe', attributes: { 'allow-uri-read': true } })
+
+          const obj = html('.imageblock.plantuml > div > object')
+          expect(obj).toBeObject()
+          expect(obj.attr('data')).toContain(shared.PLANTUML_REMOTE_URL)
+        })
+        it('should use <obj> tag when format is svg and named attribute opts=interactive is present (local url)', async () => {
+          const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':plantuml-fetch-diagram:'], ['test', 'svg', 'opts=interactive']), { safe: 'safe', attributes: { 'allow-uri-read': true } })
+
+          const obj = html('.imageblock.plantuml > div > object')
+          expect(obj).toBeObject()
+          expect(obj.attr('data')).toBe('test.svg')
+        })
+      }
+      function checkSvg (html) {
+        const src = html('.imageblock.plantuml img').attr('src')
+
+        expect(src).toBe('test.svg')
+        expect(path.basename(src)).toBe(src)
+        expect(fs.existsSync(src)).toBe(true)
+
+        const data = fs.readFileSync(src, 'utf8')
+          // remove comments (otherwise the md5sum won't be stable)
+          .replace(/<!--[\s\S]*?-->/g, '')
+        const hash = hasha(data, { algorithm: 'md5' })
+        expect(hash).toBe(fixture.svgHash)
+        const svgContent = fs.readFileSync(src, 'utf-8')
+          .replace(/\r/gm, '')
+          .replace(/\n$/, '') // remove trailing newline
+        if (fixture.format === 'plantuml') {
+          // NOTE when using the plantuml format, the svg file includes the source
+          expect(svgContent).toContain(fixture.source)
+        }
+        expect(svgContent).toEndWith('</svg>')
       }
 
       it('should fetch to named file when positional attr :target: is set', () => {

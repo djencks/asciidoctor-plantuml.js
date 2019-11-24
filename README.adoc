@@ -107,7 +107,16 @@ E.g. `./assets/images`
 |Analogue of https://github.com/asciidoctor/asciidoctor-diagram#plantuml[PlantUML config] attribute.
 
 |plantuml-default-format
-|Sets the default output format, which is normally png. This can be overriden in specific diagrams.
+|Sets the default output format, which is normally `png`. This can be overriden in specific diagrams.
+
+|target (position 0)
+|The name of the file generated, if the diagram is downloaded.
+
+|format (position 1)
+|The format (`svg` or `png`) of the diagram.
+
+|opts (position 2)
+|Unspecified for link to diagram, `inline` for inline svg, or `interactive` for interactive object.
 
 |===
 

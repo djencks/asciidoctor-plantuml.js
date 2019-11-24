@@ -8,7 +8,7 @@ const hasha = require('hasha')
 const png = require('./png-metadata.js')
 const cheerio = require('cheerio')
 const asciidoctorPlantuml = require('../src/asciidoctor-plantuml.js')
-const asciidoctor = require('asciidoctor.js')()
+const asciidoctor = require('@asciidoctor/core')()
 const ContentCatalog = require('@antora/content-classifier/lib/content-catalog')
 tmp.setGracefulCleanup()
 
@@ -209,6 +209,11 @@ graphviz::${__dirname}/fixtures/nodes.dot[format=png]`, {extension_registry: reg
           expect(obj).toBeObject()
           expect(obj.attr('data')).toBe('test.svg')
         })
+        it('should create data uri when data-uri is set, svg format', () => {
+          const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':data-uri:'], ['myFile', 'svg']), { safe: 'safe', attributes: { 'allow-uri-read': true } })
+          src = html('.imageblock.plantuml img').attr('src')
+          expect(src).toStartWith('data:image/svg+xml;base64,')
+        })
       }
       function checkSvg (html) {
         const src = html('.imageblock.plantuml img').attr('src')
@@ -231,6 +236,12 @@ graphviz::${__dirname}/fixtures/nodes.dot[format=png]`, {extension_registry: reg
         }
         expect(svgContent).toEndWith('</svg>')
       }
+
+      it('should create data uri when data-uri is set', () => {
+        const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':data-uri:'], ['myFile']), { safe: 'safe', attributes: { 'allow-uri-read': true } })
+        src = html('.imageblock.plantuml img').attr('src')
+        expect(src).toStartWith('data:image/png;base64,')
+      })
 
       it('should fetch to named file when positional attr :target: is set', () => {
         const html = shared.toJQueryDOM(inputFn([`:plantuml-server-url: ${shared.PLANTUML_REMOTE_URL}`, ':plantuml-fetch-diagram:'], ['myFile']))

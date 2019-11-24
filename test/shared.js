@@ -2,7 +2,7 @@
 /* global Opal */
 const asciidoctorPlantuml = require('../src/asciidoctor-plantuml.js')
 const plantumlEncoder = require('plantuml-encoder')
-const asciidoctor = require('asciidoctor.js')()
+const asciidoctor = require('@asciidoctor/core')()
 const cheerio = require('cheerio')
 
 const registry = asciidoctorPlantuml.register(asciidoctor.Extensions.create())

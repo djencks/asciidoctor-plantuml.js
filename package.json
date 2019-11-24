@@ -7,7 +7,7 @@
     "dist"
   ],
   "dependencies": {
-    "asciidoctor.js": "^1.5.9",
+    "@asciidoctor/core": "2.0.3",
     "mkdirp": "^0.5.1",
     "plantuml-encoder": "^1.2.5",
     "rusha": "^0.8.13",

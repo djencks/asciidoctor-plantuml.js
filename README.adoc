@@ -17,8 +17,8 @@ toc::[]
 
 == Overview
 
-This extension mimics the behavior of the PlantUML support in https://asciidoctor.org/docs/asciidoctor-diagram[Asciidoctor Diagram] as close as possible.
-Positional and named attributes, as well as, PNG and SVG formats are supported.
+This extension mimics the behavior of the PlantUML support in https://asciidoctor.org/docs/asciidoctor-diagram[Asciidoctor Diagram] as closely as possible.
+Positional and named attributes as well as PNG and SVG formats are supported.
 
 .PlantUML example
 ----
@@ -32,7 +32,7 @@ alice -> bob
 <3> named attributes are supported
 
 Unlike _Asciidoctor Diagram_, this extension uses https://github.com/plantuml/plantuml-server[PlantUML server] for displaying images.
-Inside `image` tags produced by it, the `src` attribute contains a link to PlantUML server.
+The default behavior is that generated `image` tags will have the `src` attribute contain a link to a PlantUML server.
 
 [NOTE]
 ====
@@ -72,7 +72,7 @@ digraph foo {
 
 === PlantUML server
 
-https://github.com/plantuml/plantuml-server[PlantUML server] is a standalone web application exposing HTTP API that allows generating diagram images on the fly.
+https://github.com/plantuml/plantuml-server[PlantUML server] is a standalone web application exposing an HTTP API that allows generating diagram images on the fly.
 
 It can be used in two modes:
 
@@ -87,7 +87,7 @@ One could easily deploy it as Docker container as described in https://github.co
 
 Extension behaviour can be configured via http://asciidoctor.org/docs/user-manual/#attributes[Asciidoctor attributes].
 
-.Supported configuration attributes
+.Supported global or page configuration attributes
 [cols="3,9"]
 |===
 |Attribute |Description
@@ -101,15 +101,78 @@ Otherwise, `img` tags will have `src` attribute pointing to `:plantuml-server-ur
 
 |imagesoutdir
 |Analogue of https://asciidoctor.org/docs/asciidoctor-diagram/#image-output-location[Asciidoctor Diagram] attribute.
-E.g. `./assets/images`
+E.g. `./assets/images` (not applicable to Antora usage)
 
 |plantuml-config-file
 |Analogue of https://github.com/asciidoctor/asciidoctor-diagram#plantuml[PlantUML config] attribute.
 
 |plantuml-default-format
-|Sets the default output format, which is normally png. This can be overriden in specific diagrams.
+|Sets the default output format, which is normally `png`. This can be overriden in a specific diagram with the `format` attribute.
+
+|plantuml-default-options
+|Sets the default for the `options` attribute. May be set to `inline` for inline svg, or `interactive` for interactive object.
 
 |===
+
+.Block or block macro attributes
+[cols="3,1,8"]
+|===
+|Attribute |Position |Description
+
+|target 
+|0
+|The name of the file generated, if the diagram is downloaded.
+
+|format 
+|1
+|The format (`svg` or `png`) of the diagram.
+
+|options or opts 
+|(not positional)
+|Unspecified for link to diagram, `inline` for inline svg, or `interactive` for interactive object.
+The `interactive` option uses a link to the diagram.
+
+|===
+
+For instance,
+
+```
+[plantuml, target=myImage, format=svg, opts=inline]
+...
+```
+is equivalent to
+```
+[plantuml, myImage, svg, options=inline]
+...
+```
+
+[NOTE]
+The `inline` option relies on asciidoctor inline remote svg support.
+Consult the https://asciidoctor.org/docs/user-manual/#include-uri[asciidoctor documentation] for additional configuration requirements for `allow-uri-read` and `safe`.
+
+[WARNING]
+Asciidoctor has several security-oriented settings including `allow-uri-read` and `safe` that may restrict file download.
+When the `plantuml-fetch-diagram` attribute is set, this plugin will download images irrespective of the asciidoctor settings.
+
+== Compatibility with `asciidoctor-diagram`
+
+The capabilities of this extension overlap with those of `asciidoctor-diagram`.
+In this overlap, configuration is compatible.
+To obtain the same behavior with both, observe the following restrictions.
+
+* Source diagram must be `plantuml` format.
+** This extension also supports other diagram types with the plantuml block or block macro, whereas `asciidoctor-diagram` uses explicit block or block macro names for each diagram type.
+* Specify `plantuml-fetch-diagram` on the page or globally.
+** By default, this extension does not download diagrams, whereas `asciidoctor-diagram` does.
+* Specify or imply `png` or `svg` output formats.
+** This extension does not support the `txt` output format, whereas `asciidoctor-diagram` does.
+** This extension supports changing the default output format from `png` to `svg` with the page or global `plantuml-default-format` attribute, whereas the `asciidoctor-diagram` default output format is always `png`.
+* Specify the target name.
+** Generated names (from a hash) may not be identical between this extension and `asciidoctor-diagram`.
+* Avoid the `inline` and `interactive` options.
+** These options are not supported by `asciidoctor-diagram`.
+* Test usage of `data-uri`.
+** Compatibility of the interaction of `data-uri` with this extension and `asciidoctor-diagram` is unknown.
 
 == Antora integration
 
